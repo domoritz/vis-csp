@@ -1,0 +1,226 @@
+#!/usr/bin/env python
+# Author: Javier Romero
+# Date: 26.06.2015
+
+import sys
+import os
+import re
+
+def print_full():
+    print """
+Usage: asprin [options] [clingo_options] [files]
+
+
+Solving Options:
+
+  --number,-n=<n>,<n>\t\t: Compute at most <n> optimal models (0 for all)
+
+  --project\t\t\t: Project on the atoms that appear in the preference statements
+
+  --mode={0,1}\t\t\t: If 1, use method that grounds preference program only once, the default is 0 
+  
+  --steps=<s>\t\t\t: Compute only <s> steps
+
+  --release-last\t\t: Release a model once it has been improved
+
+  --no-opt-improving\t\t: Do not use optimal models when improving a model
+
+  --preference-trans-ext=<v>\t: For preference programs set option --trans-ext to <v> 
+  
+  --do-external\t\t\t: Use externals even when computing one optimal model
+
+  --domain-heuristic=<m>[,<v>]\t: Use domain heuristic on preference atoms with modifier <m> and value <v> (1 by default)
+
+  --no-syntax-check\t\t: Disable syntax checking
+
+  --no-boolean-formula\t\t: Do not use boolean formulas
+
+
+Basic Options:
+
+  --version\t\t\t: Print version
+  
+  --show-clingo\t\t\t: Show clingo output
+
+  --hide-asprin\t\t\t: Do not print asprin models
+
+  --show-optimal\t\t: Show only the optimal models 
+
+  --to-clingo=<f>\t\t: Pass <f> directly to clingo
+
+  --clingo=<c>\t\t\t: Use clingo system <c>
+
+  --parse\t\t\t: Run the parser and exit
+
+  --print-call\t\t\t: Print the inner call to asprin.parser and clingo and exit
+
+  --help,-h[=<n>]\t\t: Print help {1=basic|2=full} and exit
+
+  --help-clingo[=<n>]\t\t: Print clingo {1=basic|2=more|3=full} help and exit
+
+
+Clingo Options:
+
+  Passed directly to clingo
+
+
+Default call : asprin --number=1 <inputfiles>
+Inner call   : asprin.parser     <inputfiles> | clingo --outf=3 - asprin.py
+
+"""
+
+def print_basic():
+    print """
+Usage: asprin [options] [clingo_options] [files]
+
+
+Solving Options:
+
+  --number,-n=<n>,<n>\t\t: Compute at most <n> optimal models (0 for all)
+
+  --project\t\t\t: Project on the atoms that appear in the preference statements
+
+
+Basic Options:
+
+  --help,-h[=<n>]\t\t: Print help {1=basic|2=full} and exit
+
+  --help-clingo[=<n>]\t\t: Print clingo {1=basic|2=more|3=full} help and exit
+
+
+Default call : asprin --number=1 <inputfiles>
+Inner call   : asprin.parser     <inputfiles> | clingo --outf=3 - asprin.py
+"""
+
+def print_version():
+    print "asprin version 1.1.1"
+    
+
+if __name__ == '__main__':
+
+    args = sys.argv[1:]
+    clingoOptions = []
+    files         = []
+    finished = False
+    showClingoOutput=False
+    showWarning=False
+    onlyParse=False
+    printCall=False
+    clingoFiles = []
+    inConstant = False
+    printVersion = False
+
+    dir = os.path.dirname(os.path.abspath(__file__))
+    clingo=dir+"/clingo" if os.path.isfile(dir+"/clingo") else "clingo"
+    asprin_parser=dir+"/asprin.parser" if os.path.isfile(dir+"/asprin.parser") else "asprin.parser"
+    asprin_py=dir+"/asprin.py" if os.path.isfile(dir+"/asprin.py") else "asprin.py"
+
+    for i in args:
+    
+        # CLINGO OPTIONS AND FILES
+        if inConstant:
+            clingoOptions.append("-c " + i)
+            inConstant = False
+        elif i=="-c" or i=="--const":
+            inConstant=True
+        elif (re.match( r'^[0-9]+$',i)): clingoOptions.append("-c _asprin_n=" + i);
+        elif i[0] != '-':
+            files.append(i) # OPTIONS START WITH -
+        
+        # BASIC OPTIONS
+        elif i.startswith("--number="):
+            clingoOptions.append("-c _asprin_n=" + i[9:])
+        elif i.startswith("-n="):
+            clingoOptions.append("-c _asprin_n=" + i[3:])
+        elif i=="--project":
+            clingoOptions.append("-c _asprin_project=1")
+        elif i=="--help=1" or i=="-h=1" or i=="--help" or i=="-h":
+            print_version()
+            print_basic()
+            finished=True
+        elif i=="--version":
+            printVersion = True 
+        elif i=="--help=2" or i=="-h=2":
+            print_version()
+            print_full()
+            finished=True
+        elif i.startswith("--help-clingo"):
+            os.system(clingo + " --help" + i[13:])
+            finished=True
+        
+        # EXTENDED SOLVE OPTIONS
+        elif i=="--release-last":
+            clingoOptions.append("-c _asprin_release_last=1")
+        elif i=="--no-opt-improving":
+            clingoOptions.append("-c _asprin_no_opt_improving=1")
+        elif i=="--do-external":
+            clingoOptions.append("-c _asprin_do_external=1")
+        elif i=="--no-syntax-check":
+            clingoOptions.append("-c _asprin_no_syntax_check=1")
+        elif i=="--no-boolean-formula":
+            clingoOptions.append("-c _asprin_no_boolean_formula=1")
+        elif i.startswith("--preference-trans-ext="):
+            clingoOptions.append("-c _asprin_tr=" + i[23:])
+        elif i.startswith("--steps="):
+            clingoOptions.append("-c _asprin_steps=" + i[8:])
+        elif i.startswith("--domain-heuristic="):
+            matchObj = re.match( r'(init|factor|level|sign|true|false)(,-?[0-9]+)?$',i[19:])
+            if matchObj:
+                clingoOptions.append("--heuristic=Domain")
+                clingoOptions.append("-c _asprin_heuristic=1")
+                clingoOptions.append("-c _asprin_heuristic_mode=" + matchObj.group(1))
+                if matchObj.group(2): clingoOptions.append("-c _asprin_heuristic_value=" + matchObj.group(2)[1:])
+            else:
+                print_version()
+                print "ERROR (asprin): format of option --domain-heuristic is not correct"
+                sys.exit()
+        elif i.startswith("--mode="):
+            opt = i[7:]
+            if (opt != "0") and (opt != "1"):
+                print_version()
+                print "ERROR (asprin): format of option --mode is not correct"
+                sys.exit()
+            clingoOptions.append("-c _asprin_mode=" + opt)
+                
+        # EXTENDED SHOW OPTIONS
+        elif i=="--show-clingo":
+            showClingoOutput=True
+        elif i=="--hide-asprin":
+            clingoOptions.append("-c _asprin_no_print=1")
+        elif i=="--show-optimal":
+            clingoOptions.append("-c _asprin_no_print=-1")
+        
+        # HIDDEN OPTIONS
+        elif i=="--experiments":
+            clingoOptions.append("-c _asprin_no_syntax_check=1 -c _asprin_no_print=-1 --quiet --stats=2 --verbose=2")
+            showClingoOutput=True
+        
+        # EXTENDED BASIC OPTIONS
+        elif i=="--parse":
+            onlyParse=True
+        elif i=="--print-call":
+            printCall=True
+        elif i.startswith("--to-clingo="):
+            clingoFiles.append(i[12:])
+        elif i.startswith("--clingo="):
+            clingo=i[13:]
+        
+        # ELSE
+        else: clingoOptions.append(i)
+   
+    if not showClingoOutput: clingoOptions.append(" --outf=3 ")
+    if not finished:
+        if printVersion:
+            print_version()
+            os.system(asprin_parser + " --version")
+            print
+            os.system(clingo + " --version")
+        elif printCall:
+            print_version()
+            os.system("echo \"" + asprin_parser + " " + ' '.join(files) + " | " + clingo + " - " + asprin_py + " " + ' '.join(clingoOptions) + " " + ' '.join(clingoFiles) + " \" ")
+        elif onlyParse:
+            os.system(asprin_parser + " " + ' '.join(files))
+        else: 
+            print_version()
+            os.system(asprin_parser + " " + ' '.join(files) + " | " + clingo + " - " + asprin_py + " " + ' '.join(clingoOptions) + " " + ' '.join(clingoFiles))
+            

@@ -2,13 +2,16 @@
 
 marktype(point;bar;line;area;rule;symbol;text;tick).
 channel(x;y;color;size;shape;text;detail).
-type(q;o;n;t).
+type(q;o;n).
 primitive_type(string;number;boolean).
 
-% ====== Query constraints ======
+% ====== Data definitions ======
 
-fieldtype(a,string).
-fieldtype(b,number).
+fieldtype(s1,string).
+fieldtype(s2,string).
+
+fieldtype(n1,number).
+fieldtype(n2,number).
 
 field(F) :- fieldtype(F,_).
 
@@ -18,15 +21,23 @@ field(F) :- fieldtype(F,_).
 1 { mark(M) : marktype(M) } 1.
 
 % we can encode fields with channels
-2 { encode(C,F,T) : channel(C), field(F), type(T) } 3.
+{ encode(C,F,T) : channel(C), field(F), type(T) } = 2.
+
+% ====== Query constraints ======
+
+% use certain mark
+:- not mark(bar).
+
+% want to use number as ordinal
+%% :- not encode(_,n1,o).
+
+:- not encode(_,n1,_).
+:- not encode(_,n2,_).
 
 % ====== Constraints ======
 
-% number implies quant
-
-% string implies ordinal or nominal
-:- not encode(_,F,o), not encode(_,F,n), fieldtype(F,string).
-:- not encode(_,F,q), fieldtype(F,number).
+% cannot use string for quantitative
+:- encode(_,F,q), fieldtype(F,string).
 
 % cannot encode with the same channel twice
 :- encode(C,F,T), encode(C,FF,TT), F != FF.
@@ -35,11 +46,28 @@ field(F) :- fieldtype(F,_).
 % cannot encode string as quantitative
 :- encode(C,F,q), fieldtype(F, string).
 
-% encoding number as quantitative requires binning
+% encoding number as ordinal or nominal requires binning
 bin(C) :- encode(C,F,o), fieldtype(F,number).
+bin(C) :- encode(C,F,n), fieldtype(F,number).
 
-% number is never nominal
-:- encode(_,F,n), fieldtype(F,number).
+% text mark requires text channel
+:- mark(text), not encode(text,_,_).
+% and row or column
+:- mark(text), not encode(row,_,_), not encode(column,_,_).
+
+% point, tick, and bar require x or y channel
+:- mark(point;tick;bar), not encode(x,_,_), not encode(y,_,_).
+
+% line and area require x and y channel
+:- mark(line;area), not encode(x,_,_).
+:- mark(line;area), not encode(y,_,_).
+
+% bar and tick requires quantitative (x or y)
+:- mark(bar;tick), not encode(x,_,q), not encode(y,_,q).
+% and optional ordinal/nominal (x or y); not two quantitative
+:- mark(bar;tick), encode(x,_,q), encode(y,_,q).
+
+% ====== Preferences ======
 
 % encoding channel preferences
 preferred(q,(x;y),size).
@@ -56,25 +84,29 @@ preferred(T,C,CCC) :- preferred(T,C,CC), preferred(T,CC,CCC).
 supported_channel(T,C) :- preferred(T,C,_).
 supported_channel(T,C) :- preferred(T,_,C).
 
-% can only use certain channels
+% can only use supported channels
 :- encode(C,_,T), not supported_channel(T,C).
 
-% we have to use a preferred encoding unless the encoding is already uses
-:- not encode(C,_,_), encode(CC,_,T), preferred(T,C,CC).
+% prefer certain encoding channel (depend on type)
+#preference(pencoding,poset){
+  encode(C,F,T) > encode(CC,F,T) : preferred(T,C,CC), field(F)
+}.
 
-% some mark types require x and y channel
-requires((point;tick;bar;line),(x;y)).
-:- requires(M,C), mark(M), not encode(C,_,_).
+% prefer ordinal over nominal
+#preference(p2,poset){
+  mark(point) > mark(bar)
+  %encode(C,F,o) > encode(C,F,n) : channel(C), field(F)
+}.
 
-% text mark requires text channel
-:- mark(text), not encode(text,_,_).
-% and row or column
-:- mark(text), not encode(row,_,_), not encode(column,_,_).
+#preference(p1,pareto){
+  name(pencoding);
+  name(p2)
+}.
 
-
+% ====== Optimize ======
+#optimize(p1).
 
 % ====== Output ======
 #show mark/1.
 #show encode/3.
-
-%% #show supported_channel/2.
+#show bin/1.

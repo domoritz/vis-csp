@@ -1,0 +1,80 @@
+
+===================================
+ASPRIN: ASP for Preference Handling
+===================================
+
+Asprin is a general framework for qualitative and quantitative optimization in answer set programming.
+
+To learn how to use asprin, please have a look at Section 10.2 of the Potassco User Guide:
+  http://sourceforge.net/projects/potassco/files/guide/2.0/
+
+Here we describe the distribution and explain how to install the system.
+
+
+FILES
+=====
+
+asprin:        asprin system
+asprin.py:     asprin python script
+asprin.lib:    asprin preference library
+asprin.parser: asprin parser (only with binary distribution)
+clingo:        clingo-4.5.0  (only with mac binary distribution)
+README:        this file
+
+FOLDERS
+=======
+
+library:        preference programs that are part of asprin.lib
+library/simple: preference programs that define basic preferences
+examples:       some examples
+src:            asprin sources (only with sources distribution)
+
+
+UNIX and WINDOWS INSTALLATION from binaries
+===========================================
+
+
+Requirements:
+- Python 2.7
+- clingo-4.5.0 with Python support 
+
+Sources of clingo-4.5.0 are available at:
+  http://sourceforge.net/projects/potassco/files/clingo/4.5.0/clingo-4.5.0-source.tar.gz
+
+They have to be compiled with Python support 
+(see section "Enabling Scripting Support" of the INSTALL file of the clingo distribution).
+Note that the binaries included in the clingo distribution do not include this Python support,
+which is needed for asprin.
+
+To run asprin, the binary of clingo-4.5.0, named clingo, has to be in the PATH or in the current directory.
+
+
+MAC INSTALLATION from binaries
+==============================
+
+Everything should be in place (at least in a mac 10.9.3).
+
+
+
+COMPILATION FROM SOURCES
+========================
+
+Requirements:
+- Python 2.7
+- clingo-4.5.0 with Python support 
+- asprin.parser
+
+Sources of clingo-4.5.0 are available at:
+
+  http://sourceforge.net/projects/potassco/files/clingo/4.5.0/clingo-4.5.0-source.tar.gz
+
+They have to be compiled with Python support 
+(see section "Enabling Scripting Support" of the INSTALL file of the clingo distribution).
+Note that the binaries included in the clingo distribution do not include this Python support,
+which is needed for asprin.
+
+To run asprin, the binary of clingo-4.5.0, named clingo, has to be in the PATH or in the current directory.
+The binary of the asprin parser, named asprin.parser, also has to be in the PATH or in the current directory.
+To compile the parser, see the INSTALL file of the directory src.
+
+
