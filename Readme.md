@@ -17,3 +17,5 @@ With aspirin
 ```sh
 asprin/asprin vega-lite.lp asprin/library/*.lp
 ```
+
+Semantics of preference http://www.star.dist.unige.it/~marco/Data/10constraints.pdf
