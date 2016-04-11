@@ -1,6 +1,6 @@
 # Visualization constraints
 
-Visualization constraints expressed with Answer Set Programming (ASP).
+Visualization constraints expressed with Answer Set Programming (ASP) [using the Potassco tools](http://potassco.sourceforge.net/).
 
 Run it
 
