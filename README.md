@@ -1,5 +1,7 @@
 # Visualization constraints
 
+Visualization constraints expressed with Answer Set Programming (ASP).
+
 Run it
 
 ```sh
