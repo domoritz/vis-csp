@@ -156,6 +156,8 @@ is_q_q :- encode(y,_,q), encode(x,_,q).
   aggregate(C,F) : agg_func(F), channel(C)
 }.
 
+% ====== Optimize preferences ======
+
 #preference(prefs,lexico){
   1 :: name(pencoding);
   1 :: name(pmark);
@@ -163,13 +165,13 @@ is_q_q :- encode(y,_,q), encode(x,_,q).
   1 :: name(pagg)
 }.
 
+% throws warnings if we use this instead of the rule above
 %% #preference(prefs,pareto){
 %%   name(pencoding);
 %%   name(pmark);
 %%   name(ptype)
 %% }.
 
-% ====== Optimize ======
 #optimize(prefs).
 
 % ====== Output ======

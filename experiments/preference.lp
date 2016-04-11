@@ -1,3 +1,5 @@
+% Run with `asprin/asprin experiments/preference.lp  asprin/library/*.lp 0`
+
 dom(1..8).
 
 3 {a(X): dom(X)} 5.
