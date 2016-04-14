@@ -19,7 +19,7 @@ field(F) :- fieldtype(F,_).
 % ====== Generate ======
 
 % There has to be exactly one mark
-1 { mark(M) : marktype(M) } 1.
+{ mark(M) : marktype(M) } = 1.
 
 % we can encode fields with channels
 { encode(C,F,T) : channel(C), field(F), type(T) } = 2.
@@ -29,7 +29,7 @@ field(F) :- fieldtype(F,_).
 % ====== Query constraints ======
 
 % use certain mark
-:- not mark(tick).
+:- not mark(bar).
 
 % want to use number as ordinal
 %% :- not encode(_,n1,o).
@@ -43,11 +43,8 @@ field(F) :- fieldtype(F,_).
 :- encode(_,F,q), fieldtype(F,string).
 
 % cannot encode with the same channel twice
-:- encode(C,F,T), encode(C,FF,TT), F != FF.
-:- encode(C,F,T), encode(C,FF,TT), T != TT.
-
-% cannot encode string as quantitative
-:- encode(C,F,q), fieldtype(F, string).
+:- encode(C,F,_), encode(C,FF,_), F != FF.
+:- encode(C,_,T), encode(C,_,TT), T != TT.
 
 % encoding number as ordinal or nominal requires binning
 bin(C) :- encode(C,F,o), fieldtype(F,number).
@@ -81,7 +78,7 @@ bin(C) :- encode(C,F,n), fieldtype(F,number).
 
 % orientation for bars and ticks
 orientation(horizontal) :- mark(bar;tick), encode(x,_,(o;n)).
-orientation(vetical) :- mark(bar;tick), encode(y,_,(o;n)).
+orientation(vertical) :- mark(bar;tick), encode(y,_,(o;n)).
 
 % ====== Preferences ======
 
