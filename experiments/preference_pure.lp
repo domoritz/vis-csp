@@ -1,6 +1,6 @@
 dom(1..30).
 
-2 {a(X): dom(X)} 5.
+3 {a(X): dom(X)} 5.
 
 pref(X,Y):- X<Y, dom(X), dom(Y).
 
