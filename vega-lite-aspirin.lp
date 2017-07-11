@@ -18,7 +18,7 @@ field(F) :- fieldtype(F,_).
 
 % ====== Generate ======
 
-% pick one marktype
+% There has to be exactly one mark
 { mark(M) : marktype(M) } = 1.
 
 % we can encode fields with channels
@@ -76,7 +76,41 @@ bin(C) :- encode(C,F,n), fieldtype(F,number).
 % cannot bin and aggregate
 :- bin(C), aggregate(C,_).
 
-% viz type
+% orientation for bars and ticks
+orientation(horizontal) :- mark(bar;tick), encode(x,_,(o;n)).
+orientation(vertical) :- mark(bar;tick), encode(y,_,(o;n)).
+
+% ====== Preferences ======
+
+% encoding channel preferences
+preferred_channel(q,(x;y),size).
+preferred_channel(q,size,color).
+preferred_channel(q,color,text).
+preferred_channel((o;n),(x;y),(column;row)).
+preferred_channel((o;n),(column;row),color).
+preferred_channel(o,color,size).
+preferred_channel(n,color,shape).
+
+% transitivity of preferences
+preferred_channel(T,C,CCC) :- preferred_channel(T,C,CC), preferred_channel(T,CC,CCC).
+
+supported_channel(T,C) :- preferred_channel(T,C,_).
+supported_channel(T,C) :- preferred_channel(T,_,C).
+
+% can only use supported channels
+:- encode(C,_,T), not supported_channel(T,C).
+
+% prefer certain encoding channel (depend on type)
+#preference(pencoding,poset){
+  encode(C,F,T) > encode(CC,F,T) : preferred_channel(T,C,CC), field(F)
+}.
+
+% prefer quantitative > ordinal > nominal
+#preference(ptype,poset){
+  encode(C,F,q) > encode(C,F,o) : channel(C), field(F);
+  encode(C,F,o) > encode(C,F,n) : channel(C), field(F)
+}.
+
 is_q :- encode(x,_,q), not encode(y,_,_).
 is_q :- encode(y,_,q), not encode(x,_,_).
 
@@ -91,9 +125,21 @@ is_q_o :- encode(y,_,q), encode(x,_,o).
 
 is_q_q :- encode(y,_,q), encode(x,_,q).
 
-% orientation for bars and ticks
-orientation(horizontal) :- mark(bar;tick), encode(x,_,(o;n)).
-orientation(vertical) :- mark(bar;tick), encode(y,_,(o;n)).
+#preference(pmark,aso){
+  mark(tick) > mark(point) || is_q;
+  mark(point) > mark(text) || is_q;
+
+  mark(point) > mark(text) || is_o_o_or_n_n;
+
+  mark(bar) > mark(point) || is_q_n;
+  mark(point) > mark(text) || is_q_n;
+
+  mark(line) > mark(bar) || is_q_o;
+  mark(bar) > mark(point) || is_q_o;
+  mark(point) > mark(text) || is_q_o;
+
+  mark(point) > mark(text) || is_q_q
+}.
 
 % only use supported mark types
 :- is_q, not mark(tick), not mark(point), not mark(text).
@@ -102,42 +148,28 @@ orientation(vertical) :- mark(bar;tick), encode(y,_,(o;n)).
 :- is_q_o, not mark(line), not mark(bar), not mark(point), not mark(text).
 :- is_q_q, not mark(point), not mark(text).
 
-% supported channels
-supported_channel(q,(x;y)).
-supported_channel(q,size).
-supported_channel(q,color).
-supported_channel(q,text).
-supported_channel((o;n),(x;y)).
-supported_channel((o;n),(column;row)).
-supported_channel((o;n),(column;row)).
-supported_channel((o;n),color).
-supported_channel(o,size).
-supported_channel(n,shape).
+% minimize aggregations
+#preference(pagg,less(cardinality)){
+  aggregate(C,F) : agg_func(F), channel(C)
+}.
 
-% can only use supported channels
-:- encode(C,_,T), not supported_channel(T,C).
+% ====== Optimize preferences ======
 
-% ====== Preferences ======
+#preference(prefs,lexico){
+  1 :: name(pencoding);
+  1 :: name(pmark);
+  1 :: name(ptype);
+  1 :: name(pagg)
+}.
 
-% channel preferences
+% throws warnings if we use this instead of the rule above
+%% #preference(prefs,pareto){
+%%   name(pencoding);
+%%   name(pmark);
+%%   name(ptype)
+%% }.
 
-penalty("size penalty",1) :- encode(size,F,q).
-penalty("color penalty",2) :- encode(color,F,q).
-penalty("text penalty",3) :- encode(text,F,q).
-
-penalty("facet penalty",1) :- encode(column,F,(o;n)), encode(row,F,(o;n)).
-penalty("color penalty",2) :- encode(color,F,(o;n)).
-penalty("size penalty",3) :- encode(size,F,o).
-penalty("shape penalty",3) :- encode(shape,F,n).
-
-% prefer quantitative > ordinal > nominal
-penalty("prefer Q over O",1) :- encode(C,F,o).
-penalty("prefer O over N",2) :- encode(C,F,n).
-
-% don't use aggregation if possible
-penalty("minimize aggregations",aggregate(C,F),1) :- aggregate(C,F).
-
-#minimize { P: penalty(_,P) }.
+#optimize(prefs).
 
 % ====== Output ======
 #show mark/1.
