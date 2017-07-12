@@ -22,7 +22,7 @@ field(F) :- fieldtype(F,_).
 { mark(M) : marktype(M) } = 1.
 
 % we can encode fields with channels
-{ encode(C,F,T) : channel(C), field(F), type(T) } = 2.
+1 { encode(C,F,T) : channel(C), field(F), type(T) }.
 
 0 { aggregate(C,F): agg_func(F) } 1 :- encode(C,_,_).
 
@@ -121,7 +121,9 @@ supported_channel(n,shape).
 
 % channel preferences
 
-penalty("size penalty",1) :- encode(size,F,q).
+#const channel_weight = 1.
+
+penalty("size penalty",1 * channel_weight) :- encode(size,F,q).
 penalty("color penalty",2) :- encode(color,F,q).
 penalty("text penalty",3) :- encode(text,F,q).
 
@@ -135,7 +137,7 @@ penalty("prefer Q over O",1) :- encode(C,F,o).
 penalty("prefer O over N",2) :- encode(C,F,n).
 
 % don't use aggregation if possible
-penalty("minimize aggregations",aggregate(C,F),1) :- aggregate(C,F).
+penalty("minimize aggregations",1) :- aggregate(C,F).
 
 #minimize { P: penalty(_,P) }.
 
