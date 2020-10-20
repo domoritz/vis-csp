@@ -1,6 +1,6 @@
 # Visualization constraints
 
-Visualization constraints expressed with Answer Set Programming (ASP) [using the Potassco tools](http://potassco.sourceforge.net/).
+Visualization constraints expressed with Answer Set Programming (ASP) [using the Potassco tools](http://potassco.sourceforge.net/). This project is a precursor of [Draco](https://github.com/uwdata/draco). 
 
 Run it with aspirin
 
